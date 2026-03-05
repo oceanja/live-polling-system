@@ -1,145 +1,191 @@
-# Live Polling System —  SDE Intern Assignment
+# Live Polling System
 
-A **resilient real-time live polling system** where The system supports **Teacher (Admin)** and **Student (User)** personas
-with real-time interaction, server-synchronized timers, persistent state recovery, and database-backed results.
-
----
-
-## 🚀 Project Overview
-
-This application allows a teacher to create live polls with a configurable timer.  
-Students receive the poll in real time, submit their answers within the time limit, and instantly view live results.
-
-The system is designed to be **resilient**:
-- Refreshing the page does **not** reset an active poll
-- Late-joining students see the **correct remaining time**
-- Server is the **single source of truth** for poll state and timers
-- Duplicate votes are prevented at the database level
+A **resilient real-time live polling application** built for the **Intervue.io SDE Intern Assignment**. Supports two personas — **Teacher** and **Student** — with server-synchronized timers, full state recovery on refresh, and database-backed results.
 
 ---
 
-## 🧑‍🏫 Teacher Persona (Admin)
+## Tech Stack
 
-### Features
-- Create a poll with:
-  - Question
-  - Multiple options
-  - Configurable duration (e.g., 30s / 60s / 90s)
-- View live polling results in real time
-- View poll history (stored in database)
-- Create a new poll only when:
-  - No poll is active, or
-  - Previous poll has ended
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19 + TypeScript + Vite |
+| Backend | Node.js + Express 5 + TypeScript |
+| Real-time | Socket.IO 4 |
+| Database | PostgreSQL + Prisma ORM |
+| Dev Server | ts-node-dev |
 
 ---
 
-## 🧑‍🎓 Student Persona (User)
+## Features
 
-### Features
-- Enter name on first visit (unique per browser tab/session)
-- Receive poll instantly via Socket.io
-- Server-synchronized countdown timer
-- Submit vote once per poll
-- View live results after submission or when poll ends
+### Teacher (Admin)
+- Create a poll with a question, multiple options, and a configurable timer (30 / 45 / 60 seconds)
+- View live vote counts and percentages updating in real-time as students vote
+- View full poll history with final results — fetched from DB, not local state
+- Ask a new question at any time
 
----
+### Student (User)
+- Enter a name on first visit (unique per browser tab via UUID session)
+- Instantly receives the poll question when teacher asks it via Socket.IO
+- **Timer is server-synced** — joining 20 seconds into a 60-second poll shows 40 seconds, not 60
+- Submit an answer within the time limit (one vote per student per poll)
+- View live results after submitting; see final results when the poll ends
 
-## 🧠 Key System Behaviors (Resilience)
-
-- **State Recovery**
-  - Refreshing the browser resumes the poll state
-  - Remaining time is recalculated using server timestamps
-- **Timer Synchronization**
-  - Timer is controlled only by the server
-  - Late joiners see the correct remaining time
-- **Data Integrity**
-  - Votes stored in DB with unique constraints
-  - Duplicate votes prevented even if client is manipulated
+### Resilience (The "Resilience Factor")
+- **Teacher refreshes** mid-poll → UI recovers the current poll and live results from DB
+- **Student refreshes** mid-poll → Timer resumes from the server-calculated remaining time
+- **Duplicate vote protection** → Server rejects duplicate votes even if the client is manipulated
+- **Server is the single source of truth** for both timer and vote counts
 
 ---
 
-## 🛠 Tech Stack
+## Project Structure
 
-### Frontend
-- React.js (Hooks)
-- TypeScript
-- Socket.io Client
-- Vite
-
-### Backend
-- Node.js
-- Express.js
-- TypeScript
-- Socket.io
-- Prisma ORM
-
-### Database & Cache
-- PostgreSQL (Persistent storage)
-- Redis (Active poll state + timer recovery)
-
----
-
-## 🏗 Architecture Overview
-
-### Backend Architecture :
 ```
-src/
-├── controllers/        # HTTP controllers
-├── services/           # Business logic (PollService)
-├── sockets/            # Socket event handlers
-├── config/             # Prisma, Redis config
-├── app.ts              # Express app
-└── server.ts           # HTTP + Socket server
+live-polling-system/
+├── backend/
+│   ├── prisma/
+│   │   └── schema.prisma          # DB models: Poll, Option, Vote
+│   ├── socket.ts                  # Shared io instance (singleton)
+│   └── src/
+│       ├── server.ts              # HTTP + Socket.IO bootstrap
+│       ├── app.ts                 # Express app + routes
+│       ├── controllers/
+│       │   ├── poll.controller.ts
+│       │   └── answer.controller.ts
+│       ├── services/
+│       │   └── poll.service.ts    # All business logic + DB queries
+│       ├── sockets/
+│       │   └── poll.socket.ts     # Socket event handlers + server-side timer
+│       └── routes/
+│           ├── poll.routes.ts
+│           ├── student.ts
+│           └── answer.ts
+└── frontend/
+    └── src/
+        ├── socket.ts              # Shared socket client (singleton)
+        ├── api/                   # REST API helpers
+        ├── pages/
+        │   ├── RoleSelect/
+        │   ├── Teacher/
+        │   │   ├── TeacherCreatePollPage.tsx
+        │   │   ├── TeacherLivePollPage.tsx
+        │   │   └── TeacherPollHistoryPage.tsx
+        │   └── Student/
+        │       ├── StudentLogin.tsx
+        │       └── StudentPollPage.tsx
+        └── app/
+            ├── App.tsx
+            └── routes.tsx
 ```
-### Frontend Architecture:
-```
-src/
-├── pages/
-│   ├── Teacher/
-│   ├── Student/
-├── socket.ts           # Socket.io client
-├── api/                # REST helpers
-└── hooks/              # Custom hooks (optional)
-```
+
 ---
 
-## 🔁 Real-Time Flow:
+## Getting Started
 
-1. Teacher creates a poll
-2. Backend:
-   - Stores poll in DB
-   - Stores active poll ID + timestamps in Redis
-   - Starts server-side timer
-3. Students receive poll instantly via Socket.io
-4. Votes are submitted:
-   - Stored in DB
-   - Aggregated results emitted in real time
-5. Poll ends:
-   - Final results emitted
-   - Poll archived for history
+### Prerequisites
+- Node.js 18+
+- PostgreSQL running locally (default: `localhost:5432`)
 
----
+### 1. Clone & Install
 
-## 🧪 How to Run Locally
+```bash
+git clone https://github.com/oceanja/live-polling-system.git
+cd live-polling-system
 
-### Backend
+cd backend && npm install
+cd ../frontend && npm install
+```
+
+### 2. Configure Environment
+
+**backend/.env**
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poll_db
+PORT=5001
+```
+
+**frontend/.env**
+```env
+VITE_API_URL=http://localhost:5001
+```
+
+### 3. Set Up the Database
+
 ```bash
 cd backend
-npm install
-npm run dev
+npx prisma db push
 ```
-## ✅ Assignment Requirements Coverage:
-Teacher can create polls
-1. Students can answer polls
-2. Live polling results
-3.Poll history from database
-4. Server-synchronized timers
-5. Refresh-safe state recovery
-6. One vote per student enforced
-7. Socket.io real-time communication
-8. TypeScript used end-to-end
+
+### 4. Run the App
+
+**Terminal 1 — Backend:**
+```bash
+cd backend
+npm run dev
+# Server running on port 5001
+```
+
+**Terminal 2 — Frontend:**
+```bash
+cd frontend
+npm run dev
+# App running on http://localhost:5173
+```
 
 ---
 
-### Design reference provided by Intervue.io via Figma.
-This project was built strictly following the shared design and technical guidelines.
+## API Reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Health check |
+| `POST` | `/api/polls/create` | Create a new poll |
+| `GET` | `/api/polls/active` | Get current active poll + remaining time |
+| `GET` | `/api/polls/history` | Get all ended polls with results |
+| `GET` | `/api/polls/:pollId/results` | Get results for a specific poll |
+| `POST` | `/api/student/join` | Register a student (returns UUID) |
+| `POST` | `/api/answer/submit` | Submit a vote |
+
+## Socket Events
+
+| Event | Direction | Payload | Description |
+|-------|-----------|---------|-------------|
+| `JOIN_POLL` | Client → Server | — | Request current poll state (used on page load/refresh) |
+| `CREATE_POLL` | Client → Server | `{ question, options[], duration }` | Teacher creates a poll |
+| `SUBMIT_VOTE` | Client → Server | `{ pollId, optionId, studentId }` | Student submits a vote via socket |
+| `ACTIVE_POLL` | Server → Client | `{ poll, remainingTime }` | Response to JOIN_POLL |
+| `POLL_STARTED` | Server → All | `{ poll, remainingTime }` | Broadcast when a new poll begins |
+| `TIMER_UPDATE` | Server → All | `number` | Countdown tick every second |
+| `VOTE_UPDATE` | Server → All | `result[]` | Live vote counts after each vote |
+| `POLL_ENDED` | Server → All | `result[]` | Final results when timer hits 0 |
+
+---
+
+## Architecture Notes
+
+- **Controller-Service pattern** — socket handlers and route handlers both delegate logic to `PollService`; no business logic lives in routes or socket listeners
+- **Server-side timer** — `poll.socket.ts` runs a `setInterval` countdown and broadcasts `TIMER_UPDATE` every second; clients never trust their own clock
+- **Single `io` instance** — `backend/socket.ts` exports a shared `io` singleton so both socket handlers and REST controllers can emit events
+- **Duplicate vote guard** — `PollService.submitVote` checks for an existing vote before inserting, preventing race conditions from client-side manipulation
+
+---
+
+## Assignment Requirements Coverage
+
+| Requirement | Status |
+|-------------|--------|
+| Teacher can create polls | ✅ |
+| Students can answer polls | ✅ |
+| Live polling results | ✅ |
+| Poll history from database | ✅ |
+| Server-synchronized timers | ✅ |
+| Refresh-safe state recovery | ✅ |
+| One vote per student enforced | ✅ |
+| Socket.IO real-time communication | ✅ |
+| TypeScript end-to-end | ✅ |
+| Controller-Service architecture | ✅ |
+
+---
+
+> Design reference provided by Intervue.io via Figma. Built strictly following the shared design and technical guidelines.
