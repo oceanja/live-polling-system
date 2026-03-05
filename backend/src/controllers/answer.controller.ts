@@ -10,17 +10,7 @@ export const submitAnswer = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Missing fields" });
     }
 
-    // Save vote (DB = source of truth)
-    await PollService.submitVote({
-      pollId,
-      optionId,
-      studentId,
-    });
-
-    // Get updated results
-    const results = await PollService.getPollResults(pollId);
-
-    // 🔥 PUSH TO ALL CLIENTS (Teacher + Students)
+    const results = await PollService.submitVote({ pollId, optionId, studentId });
     io.emit("VOTE_UPDATE", results);
 
     res.json({ success: true });

@@ -28,7 +28,8 @@ export default function TeacherPolllHistoryPage() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await axios.get("http://localhost:5001/api/polls/history");
+        const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5001";
+        const res = await axios.get(`${apiBase}/api/polls/history`);
 
         const formatted: PollQuestion[] = res.data.map((poll: any) => ({
           id: poll.id,

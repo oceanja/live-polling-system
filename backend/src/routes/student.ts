@@ -12,7 +12,7 @@ router.post("/join", async (req, res) => {
   return res.json({
     success: true,
     student: {
-      id: Date.now(),
+      id: crypto.randomUUID(),
       name,
     },
   });

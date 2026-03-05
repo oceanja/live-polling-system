@@ -106,7 +106,7 @@ function QuestionSection({ question, setQuestion, duration, setDuration }: any) 
           >
             <option value={30}>30 sec</option>
             <option value={60}>60 sec</option>
-            <option value={90}>90 sec</option>
+            <option value={45}>45 sec</option>
           </select>
           <span style={styles.dropdownIcon}>▼</span>
         </div>
@@ -119,7 +119,7 @@ function QuestionSection({ question, setQuestion, duration, setDuration }: any) 
           onChange={e => setQuestion(e.target.value)}
           style={styles.textarea}
         />
-        <span style={styles.charCount}>0/100</span>
+        <span style={styles.charCount}>{question.length}/100</span>
       </div>
     </div>
   );

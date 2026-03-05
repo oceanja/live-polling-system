@@ -5,22 +5,30 @@ export const initPollSocket = (io: Server) => {
   io.on("connection", (socket: Socket) => {
     console.log("Socket connected:", socket.id);
 
-    // Teacher / Student joins
     socket.on("JOIN_POLL", async () => {
-      const data = await PollService.getActivePoll();
-      socket.emit("ACTIVE_POLL", data);
+      try {
+        const data = await PollService.getActivePoll();
+        socket.emit("ACTIVE_POLL", data);
+      } catch (e) {
+        console.error("JOIN_POLL error", e);
+      }
     });
 
-    // Teacher starts poll
     socket.on("CREATE_POLL", async (data) => {
       try {
         const poll = await PollService.createPoll(data);
-        io.emit("POLL_STARTED", {
-          poll,
-          remainingTime: poll.duration,
-        });
+        io.emit("POLL_STARTED", { poll, remainingTime: poll.duration });
       } catch (err: any) {
         socket.emit("ERROR", err.message);
+      }
+    });
+
+    socket.on("SUBMIT_VOTE", async (data) => {
+      try {
+        const results = await PollService.submitVote(data);
+        io.emit("VOTE_UPDATE", results);
+      } catch (e: any) {
+        if (e?.code !== "P2002") console.error("SUBMIT_VOTE error", e);
       }
     });
 

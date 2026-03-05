@@ -13,20 +13,11 @@ export const getActivePoll = async (_req: Request, res: Response) => {
 export const createPoll = async (req: Request, res: Response) => {
   try {
     const { question, options, duration } = req.body;
-
     if (!question || !options || !duration) {
       return res.status(400).json({ message: "Missing fields" });
     }
-
     const safeDuration = Math.min(duration, 60);
-
-const poll = await PollService.createPoll({
-  question,
-  options,
-  duration: safeDuration,
-});
-
-
+    const poll = await PollService.createPoll({ question, options, duration: safeDuration });
     res.json(poll);
   } catch (err: any) {
     res.status(400).json({ message: err.message });
@@ -35,8 +26,7 @@ const poll = await PollService.createPoll({
 
 export const getPollResults = async (req: Request, res: Response) => {
   try {
-    const { pollId } = req.params;
-
+    const pollId = req.params.pollId as string;
     const results = await PollService.getPollResults(pollId);
     res.json(results);
   } catch (err) {
@@ -44,4 +34,12 @@ export const getPollResults = async (req: Request, res: Response) => {
   }
 };
 
-
+export const getPollHistory = async (_req: Request, res: Response) => {
+  try {
+    const history = await PollService.getPollHistory();
+    res.json(history);
+  } catch (err) {
+    console.error("Poll history error", err);
+    res.status(500).json({ message: "Failed to fetch poll history" });
+  }
+};
