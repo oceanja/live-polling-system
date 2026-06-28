@@ -5,7 +5,8 @@ import http from "http";
 import { Server } from "socket.io";
 import app from "./app";
 import { initPollSocket } from "./sockets/poll.socket";
-import { initSocket } from "../socket";
+import { initSocket } from "./socket";
+import { PollService } from "./services/poll.service";
 
 const PORT = process.env.PORT || 5001;
 
@@ -20,4 +21,8 @@ initPollSocket(io);
 
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  // Re-arm countdowns for any polls left ACTIVE by a previous run.
+  PollService.resumeActivePolls().catch((e) =>
+    console.error("Failed to resume active polls", e)
+  );
 });
