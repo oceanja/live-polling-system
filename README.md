@@ -10,7 +10,6 @@ Built around a single principle: **the server is the only source of truth** — 
 
 **▶️ [Watch the demo video](https://drive.google.com/file/d/1rWDow475Vwgszc3xdw79KuvCvE7P5XMP/view?usp=sharing)**
 
-**Live app:** _add your deployed URL here_
 
 ---
 
