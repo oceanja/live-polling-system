@@ -8,13 +8,7 @@ Built around a single principle: **the server is the only source of truth** — 
 
 ## Demo
 
-<!-- 📹 DEMO VIDEO -->
-> _Demo video coming soon — placeholder below._
-
-<!--
-Paste your demo video link or embed here, e.g.:
-[![Watch the demo](docs/thumbnail.png)](https://your-video-link)
--->
+**▶️ [Watch the demo video](https://drive.google.com/file/d/1rWDow475Vwgszc3xdw79KuvCvE7P5XMP/view?usp=sharing)**
 
 **Live app:** _add your deployed URL here_
 
